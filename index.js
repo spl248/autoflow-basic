@@ -8,7 +8,7 @@ app.use(express.json());
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const SHEETS_WEBHOOK_URL = process.env.SHEETS_WEBHOOK_URL;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://tusitio.vercel.app';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://landing-adminzero.vercel.app';
 const BASIC_PRICE_ID = process.env.BASIC_PRICE_ID;
 
 app.post('/create-checkout', async (req, res) => {
@@ -48,5 +48,8 @@ app.post('/webhook', async (req, res) => {
 });
 
 app.get('/', (req, res) => res.send('AutoFlow backend funcionando'));
+
+// Nueva ruta para probar que el servidor responde (opcional)
+app.get('/ping', (req, res) => res.send('pong'));
 
 app.listen(3000, () => console.log('Server running on port 3000'));
