@@ -1,4 +1,4 @@
-// index.js – AutoFlow Pack Básico (con entrega automática de plantilla)
+// index.js – AutoFlow Pack Básico (con logs detallados en webhook)
 require('dotenv').config();
 const express = require('express');
 const Stripe = require('stripe');
@@ -24,6 +24,15 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://tusitio.vercel.app';
 // ------------------ WEBHOOK (debe ir ANTES de express.json()) ------------------
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   console.log('=== WEBHOOK RECIBIDO ===');
+  
+  // === LOGS DE DEPURACIÓN ===
+  console.log('Headers stripe-signature:', req.headers['stripe-signature']);
+  console.log('Body type:', typeof req.body);
+  console.log('Body is Buffer?', Buffer.isBuffer(req.body));
+  console.log('Secret (first 10 chars):', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 10));
+  console.log('Secret length:', process.env.STRIPE_WEBHOOK_SECRET?.length);
+  // ==========================
+
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event;
