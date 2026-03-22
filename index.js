@@ -1,3 +1,4 @@
+// index.js – AutoFlow Pack Básico (versión final con email corregido)
 require('dotenv').config();
 const express = require('express');
 const Stripe = require('stripe');
@@ -6,7 +7,7 @@ const cors = require('cors');
 
 const app = express();
 
-// Configuración CORS
+// Configuración CORS (permite peticiones desde cualquier origen durante pruebas)
 app.use(cors({
   origin: '*',               // Cambia después por tu dominio de Netlify
   methods: ['GET', 'POST'],
@@ -18,7 +19,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const BASIC_PRICE_ID = process.env.BASIC_PRICE_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://tusitio.vercel.app';
 
-// La ruta /webhook DEBE ir antes de express.json()
+// ------------------ WEBHOOK (debe ir ANTES de express.json()) ------------------
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   console.log('=== WEBHOOK RECIBIDO ===');
   console.log('Headers stripe-signature:', req.headers['stripe-signature']);
@@ -41,16 +42,18 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    console.log('Checkout completado. Email:', session.customer_email);
+    const customerEmail = session.customer_details?.email || session.customer_email || 'email no disponible';
+    console.log('Checkout completado. Email:', customerEmail);
+
     if (process.env.SHEETS_WEBHOOK_URL) {
       try {
         await axios.post(process.env.SHEETS_WEBHOOK_URL, {
-          email: session.customer_email,
+          email: customerEmail,
           plan: 'basic',
           status: 'active',
           session_id: session.id
         });
-        console.log('Cliente registrado en Sheets:', session.customer_email);
+        console.log('Cliente registrado en Sheets:', customerEmail);
       } catch (err) {
         console.error('Error al notificar a Sheets:', err.message);
       }
@@ -60,7 +63,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   res.json({ received: true });
 });
 
-// Para el resto de rutas, usamos JSON normal
+// ------------------ PARA EL RESTO DE RUTAS, USAMOS JSON NORMAL ------------------
 app.use(express.json());
 
 // Endpoint para crear sesión de pago
@@ -80,6 +83,7 @@ app.post('/create-checkout', async (req, res) => {
   }
 });
 
+// Ruta raíz para comprobar que el servidor está activo
 app.get('/', (req, res) => res.send('AutoFlow backend funcionando'));
 
 const PORT = process.env.PORT || 3000;
